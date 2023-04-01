@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -21,9 +21,39 @@ class Event(db.Model):
         self.description = description
 
 
+def format_event(event):
+    return {
+        "description": event.description,
+        "id": event.id,
+        "created_at": event.created_at
+    }
+
+
 @app.route('/')
 def Hello():
     return 'Hey!'
+
+# create an event
+
+
+@app.route('/events', methods=['POST'])
+def create_event():
+    description = request.json['description']
+    event = Event(description)
+    db.session.add(event)
+    db.session.commit()
+    return format_event(event)
+
+# get all events
+
+
+@app.route('/events', methods=['GET'])
+def get_events():
+    events = Event.query.order_by(Event.id.asc()).all()
+    event_list = []
+    for event in events:
+        event_list.append(format_event(event))
+    return {'events': event_list}
 
 
 if __name__ == "__main__":
